@@ -1,8 +1,8 @@
 # Sylphx Platform
 
-**Deploy anything. No vendor lock-in. No cold starts. No surprise bills.**
+**Connect your GitHub repo — we handle the rest.**
 
-A full-stack hosting platform for teams who've outgrown Vercel.
+A full-stack hosting platform for teams who've outgrown Vercel. Always-on containers, no cold starts, flat rate pricing.
 
 ---
 
@@ -20,9 +20,27 @@ Everything runs on dedicated infrastructure. Not shared. Not serverless. **Yours
 
 ---
 
-## Deploy in 3 Steps
+## Two Deployment Paths
 
-### 1. Add a `Dockerfile` to your repo
+Choose the setup that fits your team.
+
+---
+
+### Path 1 — Simple: Coolify Native Build
+
+> **"Connect your GitHub repo. We detect your Dockerfile and build + deploy automatically on every push."**
+
+**No GitHub Actions needed. No CI configuration. Zero DevOps.**
+
+**Best for:** Teams without a dedicated DevOps engineer, early-stage projects, rapid iteration.
+
+**How it works:**
+
+1. Add a `Dockerfile` to your repo (see below)
+2. Send us your repo URL + domain + env vars
+3. We connect it to our build system — every push to `main` triggers a build and deploy automatically
+
+That's it. We handle build + deploy end to end.
 
 ```dockerfile
 FROM node:22-alpine
@@ -35,9 +53,41 @@ CMD ["node", "server.js"]
 
 Any language. Any framework. If it runs in Docker, it runs here.
 
-### 2. Add the deploy workflow
+**What to send us on onboarding:**
+- GitHub repo URL (public, or invite `claw-sylphx` as collaborator)
+- App name + desired domain
+- List of environment variables your app needs
 
-Copy `.github/workflows/deploy.yml` from this repo into your project.
+---
+
+### Path 2 — Advanced: Bring Your Own CI
+
+> **"Build your own image, we run it."**
+
+**Best for:** Engineering teams with existing CI pipelines, teams that need custom build environments, monorepos, or fine-grained release control.
+
+**How it works:**
+
+Your pipeline builds the image and pushes to GHCR. We pull and run it.
+
+```
+GitHub push → GitHub Actions → build → push to GHCR → Coolify pulls & deploys
+```
+
+#### Step 1: Add a `Dockerfile`
+
+```dockerfile
+FROM node:22-alpine
+WORKDIR /app
+COPY . .
+RUN npm install && npm run build
+EXPOSE 3000
+CMD ["node", "server.js"]
+```
+
+#### Step 2: Copy the deploy workflow
+
+Add `.github/workflows/deploy.yml` from this repo into your project.
 
 Set these secrets in your GitHub repo (`Settings → Secrets → Actions`):
 
@@ -48,13 +98,27 @@ Set these secrets in your GitHub repo (`Settings → Secrets → Actions`):
 | `COOLIFY_BASE_URL` | `https://coolify.sylphx.com` |
 | `GHCR_TOKEN` | GitHub PAT with `write:packages` scope |
 
-### 3. Push to deploy
+#### Step 3: Push to deploy
 
 ```bash
 git push origin main   # → auto-deploys to staging
 ```
 
 Production deploy: trigger manually from GitHub Actions → `Deploy Production`.
+
+---
+
+## Partner Onboarding Flow
+
+**Simple onboarding, handled by us:**
+
+1. **You send us:** repo URL + desired domain + list of env vars
+2. **We set up:** app in Coolify, generate a scoped deploy token, provision your services
+3. **You get back:** GitHub secrets (via secure channel) + a live URL
+
+For Path 2 teams: copy the workflow file, paste the secrets, push — done.
+
+**Contact:** [platform@sylphx.com](mailto:platform@sylphx.com)
 
 ---
 
@@ -82,7 +146,7 @@ Use your existing `@aws-sdk/client-s3` code unchanged.
 
 ### Background Jobs (Trigger.dev)
 
-Durable background tasks, scheduled cron, event-driven workflows.
+Durable background tasks, scheduled cron, event-driven workflows — no timeout limits.
 
 ```ts
 import { task, schedules } from "@trigger.dev/sdk/v3";
@@ -121,50 +185,19 @@ REDIS_URL=redis://:pass@host:6379
 
 ---
 
-## Onboarding
-
-We handle the setup. You handle the code.
-
-**What we need from you:**
-
-- GitHub repo URL (or invite `claw-sylphx` as collaborator)
-- App name + desired domain
-- List of environment variables your app needs
-- Preferred tech stack (so we can size resources appropriately)
-
-**What we set up:**
-
-- App containers (staging + production)
-- Domains + SSL (automatic, no config needed)
-- Database + Redis provisioning
-- MinIO bucket
-- Trigger.dev project
-- GitHub secrets (via secure channel)
-
-**Contact:** [platform@sylphx.com](mailto:platform@sylphx.com)
-
----
-
-## Pricing
-
-Flat monthly rate. No per-function pricing. No egress fees. No cold starts.
-
-Contact us for pricing based on your resource requirements.
-
----
-
-## vs Vercel
+## Why Not Vercel?
 
 | | Vercel | Sylphx Platform |
 |--|--------|-----------------|
-| Cold starts | Yes (serverless) | No (always-on containers) |
-| Long-running processes | No | Yes |
-| Websockets | Limited | Yes |
-| Object storage | Vercel Blob (expensive) | MinIO (S3-compatible, cheap) |
-| Background jobs | Cron only (60s limit) | Trigger.dev (unlimited duration) |
-| Database | Third-party only | Included |
-| Pricing model | Per-request / per-GB | Flat rate |
-| Vendor lock-in | High | None (standard Docker) |
+| Cold starts | Yes (serverless) | **No** (always-on containers) |
+| Long-running processes | No | **Yes** |
+| WebSockets | Limited | **Yes** |
+| Object storage | Vercel Blob (expensive) | **MinIO** (S3-compatible, cheap) |
+| Background jobs | Cron only (60s limit) | **Trigger.dev** (unlimited duration) |
+| Database | Third-party only | **Included** |
+| Pricing model | Per-request / per-GB | **Flat rate** |
+| CI required | No (managed) | **Optional** (your choice) |
+| Vendor lock-in | High | **None** (standard Docker) |
 
 ---
 
@@ -175,7 +208,15 @@ Contact us for pricing based on your resource requirements.
 - **Proxy:** Traefik + Cloudflare (SSL, DDoS protection)
 - **Storage:** MinIO (S3-compatible)
 - **Jobs:** [Trigger.dev](https://trigger.dev) (self-hosted)
-- **CI/CD:** GitHub Actions → GHCR → auto-deploy
+- **CI/CD:** Optional — native Coolify builds or GitHub Actions → GHCR
+
+---
+
+## Pricing
+
+Flat monthly rate. No per-function pricing. No egress fees. No cold starts.
+
+[Contact us](mailto:platform@sylphx.com) for pricing based on your resource requirements.
 
 ---
 
