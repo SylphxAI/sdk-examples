@@ -10,7 +10,7 @@ on:
 jobs:
   deploy:
     name: Promote to Production
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     environment: production  # optional: add manual approval in GitHub Environments
 
     steps:
