@@ -118,7 +118,7 @@ Production deploy: trigger manually from GitHub Actions → `Deploy Production`.
 
 For Path 2 teams: copy the workflow file, paste the secrets, push — done.
 
-**Contact:** [platform@sylphx.com](mailto:platform@sylphx.com)
+**Contact:** [kyle@sylphx.com](mailto:kyle@sylphx.com)
 
 ---
 
@@ -144,6 +144,8 @@ const s3 = new S3Client({
 
 Use your existing `@aws-sdk/client-s3` code unchanged.
 
+> Full example: [examples/storage.ts](./examples/storage.ts)
+
 ### Background Jobs (Trigger.dev)
 
 Durable background tasks, scheduled cron, event-driven workflows — no timeout limits.
@@ -166,6 +168,8 @@ export const weekly = schedules.task({
 ```
 
 Dashboard: `https://trigger.sylphx.com`
+
+> Full example: [examples/jobs.ts](./examples/jobs.ts)
 
 ### Database (PostgreSQL)
 
@@ -212,11 +216,21 @@ REDIS_URL=redis://:pass@host:6379
 
 ---
 
+## Build Infrastructure
+
+Builds run on our own **Hetzner AX162-R** bare-metal server (48C/96T AMD EPYC, 256 GB RAM).
+
+- **GitHub Actions minutes:** Free for all partners — we eat the cost, you pay nothing
+- **Build speed:** Image build + push to GHCR happens at LAN speed (builder and registry are on the same machine)
+- **Path 2 (advanced) partners:** If you'd like to run builds on our runners instead of GitHub's, just change `runs-on: ubuntu-latest` → `runs-on: [self-hosted, sylphx]` in your workflow file. Completely optional — you can use your own GitHub runners too.
+
+---
+
 ## Pricing
 
 Flat monthly rate. No per-function pricing. No egress fees. No cold starts.
 
-[Contact us](mailto:platform@sylphx.com) for pricing based on your resource requirements.
+[Contact us](mailto:kyle@sylphx.com) for pricing based on your resource requirements.
 
 ---
 
