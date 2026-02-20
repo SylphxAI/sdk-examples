@@ -1,0 +1,36 @@
+name: Deploy → Staging
+
+on:
+  push:
+    branches: [dev]
+
+jobs:
+  deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build & push image
+        env:
+          IMAGE: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}
+        run: |
+          docker build -t $IMAGE:staging -t $IMAGE:${{ github.sha }} .
+          docker push $IMAGE:staging
+          docker push $IMAGE:${{ github.sha }}
+
+      - name: Update IMAGE_TAG on Coolify
+        run: |
+          curl -sf -X PATCH "${{ secrets.COOLIFY_BASE_URL }}/api/v1/applications/${{ secrets.COOLIFY_APP_UUID }}/envs" \
+            -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"key\":\"IMAGE_TAG\",\"value\":\"${{ github.sha }}\"}"
+
+      - name: Trigger redeploy
+        run: |
+          curl -sf -X POST "${{ secrets.COOLIFY_BASE_URL }}/api/v1/deploy?uuid=${{ secrets.COOLIFY_APP_UUID }}&force=false" \
+            -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}"

@@ -1,0 +1,27 @@
+name: Deploy → Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Image SHA to promote (from a successful staging deploy)"
+        required: true
+
+jobs:
+  deploy:
+    name: Promote to Production
+    runs-on: ubuntu-latest
+    environment: production  # optional: add manual approval in GitHub Environments
+
+    steps:
+      - name: Update IMAGE_TAG on Coolify
+        run: |
+          curl -sf -X PATCH "${{ secrets.COOLIFY_BASE_URL }}/api/v1/applications/${{ secrets.COOLIFY_PROD_UUID }}/envs" \
+            -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"key\":\"IMAGE_TAG\",\"value\":\"${{ github.event.inputs.image_tag }}\"}"
+
+      - name: Trigger redeploy
+        run: |
+          curl -sf -X POST "${{ secrets.COOLIFY_BASE_URL }}/api/v1/deploy?uuid=${{ secrets.COOLIFY_PROD_UUID }}&force=false" \
+            -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}"
