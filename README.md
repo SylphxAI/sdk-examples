@@ -1,237 +1,145 @@
 # Sylphx Platform
 
-**Connect your GitHub repo — we handle the rest.**
+**19 production services + deployment. One TypeScript SDK.**
 
-A full-stack hosting platform for teams who've outgrown Vercel. Always-on containers, no cold starts, flat rate pricing.
+Replace Vercel, Supabase, Clerk, Firebase — and 6 more tools — with a single platform. Get auth, database, AI, billing, analytics, and CI/CD deployment out of the box.
 
----
-
-## What You Get
-
-| Service | What It Replaces |
-|---------|-----------------|
-| 🚀 **App Hosting** | Vercel / Railway / Render |
-| 🗄️ **PostgreSQL & Redis** | PlanetScale / Upstash |
-| 📦 **Object Storage (S3-compatible)** | Vercel Blob / AWS S3 |
-| ⚡ **Background Jobs & Cron** | Vercel Cron / Inngest / Quirrel |
-| 🔒 **SSL + Custom Domains** | Included, automatic |
-
-Everything runs on dedicated infrastructure. Not shared. Not serverless. **Yours.**
+🌐 **[sylphx.com](https://sylphx.com)** · 📖 **[docs](https://sylphx.com/docs)** · 🚀 **[get started free](https://sylphx.com/sign-up)**
 
 ---
 
-## Two Deployment Paths
-
-Choose the setup that fits your team.
-
----
-
-### Path 1 — Simple: Coolify Native Build
-
-> **"Connect your GitHub repo. We detect your Dockerfile and build + deploy automatically on every push."**
-
-**No GitHub Actions needed. No CI configuration. Zero DevOps.**
-
-**Best for:** Teams without a dedicated DevOps engineer, early-stage projects, rapid iteration.
-
-**How it works:**
-
-1. Add a `Dockerfile` to your repo (see below)
-2. Send us your repo URL + domain + env vars
-3. We connect it to our build system — every push to `main` triggers a build and deploy automatically
-
-That's it. We handle build + deploy end to end.
-
-```dockerfile
-FROM node:22-alpine
-WORKDIR /app
-COPY . .
-RUN npm install && npm run build
-EXPOSE 3000
-CMD ["node", "server.js"]
-```
-
-Any language. Any framework. If it runs in Docker, it runs here.
-
-**What to send us on onboarding:**
-- GitHub repo URL (public, or invite `claw-sylphx` as collaborator)
-- App name + desired domain
-- List of environment variables your app needs
-
----
-
-### Path 2 — Advanced: Bring Your Own CI
-
-> **"Build your own image, we run it."**
-
-**Best for:** Engineering teams with existing CI pipelines, teams that need custom build environments, monorepos, or fine-grained release control.
-
-**How it works:**
-
-Your pipeline builds the image and pushes to GHCR. We pull and run it.
-
-```
-GitHub push → GitHub Actions → build → push to GHCR → Coolify pulls & deploys
-```
-
-#### Step 1: Add a `Dockerfile`
-
-```dockerfile
-FROM node:22-alpine
-WORKDIR /app
-COPY . .
-RUN npm install && npm run build
-EXPOSE 3000
-CMD ["node", "server.js"]
-```
-
-#### Step 2: Copy the deploy workflow
-
-Add `.github/workflows/deploy.yml` from this repo into your project.
-
-Set these secrets in your GitHub repo (`Settings → Secrets → Actions`):
-
-| Secret | Value |
-|--------|-------|
-| `COOLIFY_TOKEN` | Provided by Sylphx on onboarding |
-| `COOLIFY_APP_UUID` | Provided by Sylphx on onboarding |
-| `COOLIFY_BASE_URL` | `https://coolify.sylphx.com` |
-| `GHCR_TOKEN` | GitHub PAT with `write:packages` scope |
-
-#### Step 3: Push to deploy
+## Quick Start
 
 ```bash
-git push origin main   # → auto-deploys to staging
+npx create-sylphx-app my-saas
+cd my-saas
+# Fill in your credentials from https://sylphx.com/dashboard
+cp .env.example .env.local
+npm run dev
 ```
 
-Production deploy: trigger manually from GitHub Actions → `Deploy Production`.
+Or add to an existing project:
 
----
-
-## Partner Onboarding Flow
-
-**Simple onboarding, handled by us:**
-
-1. **You send us:** repo URL + desired domain + list of env vars
-2. **We set up:** app in Coolify, generate a scoped deploy token, provision your services
-3. **You get back:** GitHub secrets (via secure channel) + a live URL
-
-For Path 2 teams: copy the workflow file, paste the secrets, push — done.
-
-**Contact:** [kyle@sylphx.com](mailto:kyle@sylphx.com)
-
----
-
-## Services
-
-### Object Storage (MinIO)
-
-S3-compatible. Drop-in replacement for AWS S3 or Vercel Blob.
-
-```js
-import { S3Client } from "@aws-sdk/client-s3";
-
-const s3 = new S3Client({
-  endpoint: process.env.MINIO_ENDPOINT, // provided on onboarding
-  region: "us-east-1",
-  credentials: {
-    accessKeyId: process.env.MINIO_ACCESS_KEY,
-    secretAccessKey: process.env.MINIO_SECRET_KEY,
-  },
-  forcePathStyle: true,
-});
+```bash
+npm install @sylphx/sdk
 ```
 
-Use your existing `@aws-sdk/client-s3` code unchanged.
+```typescript
+import { createConfig, track, signIn, getPlans } from '@sylphx/sdk'
 
-> Full example: [examples/storage.ts](./examples/storage.ts)
+const config = createConfig({
+  secretKey: process.env.SYLPHX_APP_SECRET!,
+})
 
-### Background Jobs (Trigger.dev)
+// Analytics
+await track(config, { event: 'signup' })
 
-Durable background tasks, scheduled cron, event-driven workflows — no timeout limits.
+// Auth
+const session = await signIn(config, { email, password })
 
-```ts
-import { task, schedules } from "@trigger.dev/sdk/v3";
-
-export const myTask = task({
-  id: "send-weekly-report",
-  run: async (payload) => {
-    // runs reliably in the background, no timeouts
-  },
-});
-
-export const weekly = schedules.task({
-  id: "weekly-cron",
-  cron: "0 9 * * MON",
-  run: async () => { /* ... */ },
-});
-```
-
-Dashboard: `https://trigger.sylphx.com`
-
-> Full example: [examples/jobs.ts](./examples/jobs.ts)
-
-### Database (PostgreSQL)
-
-Dedicated Postgres instance per project. Connection string provided on onboarding.
-
-```
-DATABASE_URL=postgresql://user:pass@host:5432/dbname
-```
-
-### Redis
-
-For caching, queues, pub/sub.
-
-```
-REDIS_URL=redis://:pass@host:6379
+// Billing
+const plans = await getPlans(config)
 ```
 
 ---
 
-## Why Not Vercel?
+## 19 Production Services
 
-| | Vercel | Sylphx Platform |
-|--|--------|-----------------|
-| Cold starts | Yes (serverless) | **No** (always-on containers) |
-| Long-running processes | No | **Yes** |
-| WebSockets | Limited | **Yes** |
-| Object storage | Vercel Blob (expensive) | **MinIO** (S3-compatible, cheap) |
-| Background jobs | Cron only (60s limit) | **Trigger.dev** (unlimited duration) |
-| Database | Third-party only | **Included** |
-| Pricing model | Per-request / per-GB | **Flat rate** |
-| CI required | No (managed) | **Optional** (your choice) |
-| Vendor lock-in | High | **None** (standard Docker) |
+| Service | What it replaces |
+|---------|-----------------|
+| 🤖 **AI Gateway** (200+ models) | OpenAI API, Anthropic |
+| 🗄️ **Database** (Postgres) | Supabase, Neon, PlanetScale |
+| 📦 **Storage** (S3-compatible) | AWS S3, Vercel Blob |
+| 🔐 **Auth** (OAuth, magic links, 2FA) | Clerk, Auth0 |
+| 📧 **Email** (transactional + newsletters) | Resend, Mailchimp |
+| ⚡ **Background Jobs + Cron** | Trigger.dev, Inngest |
+| 💳 **Billing** (subscriptions) | Stripe (we integrate it) |
+| 📊 **Analytics** (events, funnels) | Mixpanel, PostHog |
+| 🔔 **Push Notifications** | OneSignal, Firebase FCM |
+| 🔗 **Webhooks** | Svix, webhook.site |
+| 🔭 **Monitoring** (errors + perf) | Sentry, Datadog |
+| 🚩 **Feature Flags** | LaunchDarkly, Unleash |
+| 🍪 **Consent Management** | Cookiebot, OneTrust |
+| 🎯 **Referrals** | ReferralHero, Viral Loops |
+| 🏆 **Engagement** (streaks, achievements) | Custom builds |
+| 🔍 **Search** (full-text + semantic) | Algolia, Typesense |
+| 🗃️ **Key-Value Store** | Upstash, Redis Cloud |
+| ⚡ **Realtime** (pub/sub) | Pusher, Ably |
+| 🚀 **Deploy** (CI/CD, hosting) | Vercel, Railway, Render |
 
 ---
 
-## Tech Stack
+## Deployment
 
-- **Runtime:** Docker containers on bare metal
-- **Orchestration:** [Coolify](https://coolify.io)
-- **Proxy:** Traefik + Cloudflare (SSL, DDoS protection)
-- **Storage:** MinIO (S3-compatible)
-- **Jobs:** [Trigger.dev](https://trigger.dev) (self-hosted)
-- **CI/CD:** Optional — native Coolify builds or GitHub Actions → GHCR
+Every app deployed on Sylphx gets:
+
+- **Automatic deploys** on every push to `main`
+- **Preview deployments** for pull requests
+- **Zero cold starts** — always-on containers
+- **Custom domains** with automatic SSL
+- **Rollbacks** with one click
+- **Build logs** and deployment history
+
+### Connect Your Repo
+
+1. Sign up at [sylphx.com](https://sylphx.com/sign-up)
+2. Create an app in the console
+3. Connect your GitHub repo
+4. Push to deploy
+
+### Bring Your Own CI (Advanced)
+
+If you have an existing CI pipeline, use the GitHub Actions workflow from [`examples/`](./examples):
+
+```yaml
+# .github/workflows/deploy.yml
+name: Deploy to Sylphx
+on:
+  push:
+    branches: [main]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to Sylphx
+        run: |
+          curl -X POST "https://sylphx.com/api/v1/deploy" \
+            -H "Authorization: Bearer ${{ secrets.SYLPHX_APP_SECRET }}" \
+            -H "Content-Type: application/json" \
+            -d '{"ref": "${{ github.sha }}"}'
+```
 
 ---
 
-## Build Infrastructure
+## Why Sylphx?
 
-Builds run on our own **Hetzner AX162-R** bare-metal server (48C/96T AMD EPYC, 256 GB RAM).
-
-- **GitHub Actions minutes:** Free for all partners — we eat the cost, you pay nothing
-- **Build speed:** Image build + push to GHCR happens at LAN speed (builder and registry are on the same machine)
-- **Path 2 (advanced) partners:** If you'd like to run builds on our runners instead of GitHub's, just change `runs-on: ubuntu-latest` → `runs-on: [self-hosted, sylphx]` in your workflow file. Completely optional — you can use your own GitHub runners too.
+| | Vercel + Supabase + Clerk | Sylphx |
+|--|--------------------------|--------|
+| Vendors to manage | 3–10 | **1** |
+| SDKs to learn | 3–10 | **1** |
+| Dashboards | 3–10 | **1** |
+| Monthly baseline cost | $100–600+ | **Pay per use** |
+| Type safety across services | No | **100% TypeScript** |
+| Self-host option | No | **Yes** |
 
 ---
 
 ## Pricing
 
-Flat monthly rate. No per-function pricing. No egress fees. No cold starts.
+Usage-based pricing. Generous free tiers. No cold starts. No idle fees.
 
-[Contact us](mailto:kyle@sylphx.com) for pricing based on your resource requirements.
+→ [Full pricing breakdown](https://sylphx.com/pricing)
 
 ---
 
-*Built by [Sylphx](https://sylphx.com)*
+## Documentation
+
+- [Getting Started](https://sylphx.com/docs/quickstart)
+- [SDK Reference](https://sylphx.com/docs/api-reference)
+- [All Services](https://sylphx.com/services)
+- [Comparisons](https://sylphx.com/alternatives)
+
+---
+
+*Built by [Sylphx](https://sylphx.com) · [kyle@sylphx.com](mailto:kyle@sylphx.com)*

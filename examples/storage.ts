@@ -1,32 +1,76 @@
-// MinIO / S3-compatible storage — drop-in for Vercel Blob or AWS S3
-import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+/**
+ * Storage Example — @sylphx/sdk
+ *
+ * Object storage for files, images, and media.
+ * S3-compatible under the hood. Works server-side or with pre-signed URLs.
+ *
+ * Docs: https://sylphx.com/docs/storage
+ */
 
-const s3 = new S3Client({
-  endpoint: process.env.MINIO_ENDPOINT,   // provided on onboarding
-  region: "us-east-1",
-  credentials: {
-    accessKeyId: process.env.MINIO_ACCESS_KEY!,
-    secretAccessKey: process.env.MINIO_SECRET_KEY!,
-  },
-  forcePathStyle: true,
+import {
+  createConfig,
+  uploadFile,
+  getFileUrl,
+  deleteFile,
+  listFiles,
+} from "@sylphx/sdk";
+
+const config = createConfig({
+  secretKey: process.env.SYLPHX_APP_SECRET!,
 });
 
+// ──────────────────────────────────────────────
 // Upload a file
-export async function upload(key: string, body: Buffer, contentType: string) {
-  await s3.send(new PutObjectCommand({
-    Bucket: process.env.MINIO_BUCKET,
-    Key: key,
-    Body: body,
-    ContentType: contentType,
-  }));
-  return `${process.env.MINIO_ENDPOINT}/${process.env.MINIO_BUCKET}/${key}`;
+// ──────────────────────────────────────────────
+
+async function upload() {
+  const file = new File(["Hello, Sylphx!"], "hello.txt", {
+    type: "text/plain",
+  });
+
+  const result = await uploadFile(config, {
+    file,
+    path: "uploads/hello.txt",  // optional path prefix
+    // access: 'public' | 'private' (default: 'private')
+  });
+
+  console.log("Uploaded:", result.url);
+  return result;
 }
 
-// Generate a presigned URL (for private files)
-export async function presignedUrl(key: string, expiresIn = 3600) {
-  return getSignedUrl(s3, new GetObjectCommand({
-    Bucket: process.env.MINIO_BUCKET,
-    Key: key,
-  }), { expiresIn });
+// ──────────────────────────────────────────────
+// Get a public URL or a pre-signed URL
+// ──────────────────────────────────────────────
+
+async function getUrl(fileId: string) {
+  const url = await getFileUrl(config, {
+    fileId,
+    // expiresIn: 3600, // seconds (for private files)
+  });
+
+  console.log("URL:", url);
+  return url;
+}
+
+// ──────────────────────────────────────────────
+// List files in a folder
+// ──────────────────────────────────────────────
+
+async function list() {
+  const files = await listFiles(config, {
+    prefix: "uploads/",
+    limit: 50,
+  });
+
+  console.log("Files:", files);
+  return files;
+}
+
+// ──────────────────────────────────────────────
+// Delete a file
+// ──────────────────────────────────────────────
+
+async function remove(fileId: string) {
+  await deleteFile(config, { fileId });
+  console.log("Deleted:", fileId);
 }
