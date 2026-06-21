@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 1,
+  "project": {
+    "repo": "SylphxAI/sdk-examples",
+    "name": "sdk-examples",
+    "lifecycle": "maintenance",
+    "layer": "tooling",
+    "summary": "Maintenance repository preserving legacy Sylphx SDK example snippets and deployment workflow examples while canonical platform direction lives in SylphxAI/platform.",
+    "goals": [
+      "Preserve simple SDK usage examples for auth, jobs, storage, and container deployment reference.",
+      "Keep legacy deployment workflow examples understandable while the canonical implementation lives elsewhere.",
+      "Make the repository's legacy and stub status explicit to agents and central audits."
+    ],
+    "nonGoals": [
+      "Own the canonical Sylphx SDK, platform API, deploy engine, or product documentation.",
+      "Own enterprise doctrine, project manifest schema, org rulesets, rollout issue reconciliation, or shared CI and release policy.",
+      "Add new production platform behavior through examples or workflow snippets."
+    ]
+  },
+  "boundaries": {
+    "owns": [
+      {
+        "name": "legacy-sdk-examples",
+        "description": "Example TypeScript snippets for authentication, jobs, storage, and basic SDK usage."
+      },
+      {
+        "name": "legacy-deploy-examples",
+        "description": "Example Dockerfile and legacy Coolify deployment workflow snippets retained for reference."
+      }
+    ],
+    "doesNotOwn": [
+      "Canonical Sylphx platform APIs, SDK package behavior, deployment engine semantics, product docs, or production platform policy.",
+      "Coolify service behavior, registry behavior, or production runtime state beyond example workflow usage.",
+      "Enterprise doctrine, project manifest schema, rollout issue reconciliation, org rulesets, or shared workflow implementation."
+    ],
+    "publicSurfaces": [
+      {
+        "type": "documentation",
+        "name": "Legacy examples README",
+        "location": "README.md"
+      },
+      {
+        "type": "api",
+        "name": "SDK example snippets",
+        "location": "examples/"
+      },
+      {
+        "type": "manifest",
+        "name": "Example Dockerfile",
+        "location": "Dockerfile.example"
+      },
+      {
+        "type": "workflow",
+        "name": "Legacy staging deploy workflow",
+        "location": ".github/workflows/deploy-staging.yml"
+      },
+      {
+        "type": "workflow",
+        "name": "Legacy production deploy workflow",
+        "location": ".github/workflows/deploy-production.yml"
+      },
+      {
+        "type": "manifest",
+        "name": "Project control-plane manifest",
+        "location": ".doctrine/project.json"
+      }
+    ],
+    "allowedDependencies": [
+      {
+        "repo": "SylphxAI/doctrine",
+        "surface": "project manifest schema, standards, and rollout audit",
+        "direction": "downward"
+      },
+      {
+        "repo": "SylphxAI/platform",
+        "surface": "canonical platform and SDK contracts",
+        "direction": "peer-public"
+      }
+    ],
+    "forbiddenCouplings": [
+      "Do not make this repository the canonical source for Sylphx platform or SDK behavior.",
+      "Do not add production platform features by changing example snippets or legacy deployment workflows.",
+      "Do not couple consumers to legacy Coolify workflow internals as if they were central delivery policy.",
+      "Do not publish enterprise process policy from this repository instead of SylphxAI/doctrine."
+    ]
+  },
+  "documentation": {
+    "adr": {
+      "path": "docs/adr/",
+      "status": "planned"
+    },
+    "specs": {
+      "path": "README.md",
+      "status": "present"
+    },
+    "catalog": {
+      "path": ".doctrine/project.json",
+      "status": "present"
+    },
+    "runbooks": {
+      "path": "README.md",
+      "status": "present"
+    },
+    "generatedReferences": {
+      "path": "docs/reference/",
+      "status": "planned"
+    }
+  },
+  "delivery": {
+    "ciModel": "legacy-ci",
+    "requiredContexts": [],
+    "deployPath": "Legacy workflows can deploy staging from dev and production by manual workflow_dispatch through Coolify; canonical platform delivery policy lives outside this repository.",
+    "productionProof": "If these legacy workflows are used, proof must include image/tag readback, Coolify deployment readback, and service smoke evidence; this repository does not yet formalize that proof.",
+    "recoveryClass": "runtime-rollback-only"
+  },
+  "adoption": {
+    "status": "baseline",
+    "gaps": [
+      {
+        "id": "canonical-replacement-link",
+        "description": "Link the current canonical SDK and deployment examples in SylphxAI/platform before this legacy stub is fully adopted or deprecated.",
+        "owner": "SylphxAI/sdk-examples",
+        "target": "Before full adoption"
+      },
+      {
+        "id": "legacy-workflow-sunset",
+        "description": "Decide whether the Coolify workflows should be removed, disabled, or documented as supported legacy operations.",
+        "owner": "SylphxAI/sdk-examples",
+        "target": "Before commercial-grade operation"
+      },
+      {
+        "id": "ci-not-declared",
+        "description": "Declare whether example lint/typecheck validation is required or intentionally not applicable for this maintenance repository.",
+        "owner": "SylphxAI/sdk-examples",
+        "target": "Before full adoption"
+      }
+    ]
+  }
+}
